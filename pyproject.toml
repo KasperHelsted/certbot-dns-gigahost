@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "certbot-dns-gigahost"
+version = "0.1.2"
+description = "gigahost.dk DNS Authenticator plugin for Certbot"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Johan Nenzén", email = "johan.nanzen@gmail.com"},
+]
+urls = { "Homepage" = "https://github.com/JohNan/certbot-dns-gigahost" }
+requires-python = ">=3.7"
+classifiers = [
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Security",
+    "Topic :: System :: Installation/Setup",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
+
+dependencies = [
+    "certbot",
+    "requests",
+    "requests-mock",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-cov",
+    "tox",
+    "pre-commit",
+]
+
+[project.entry-points."certbot.plugins"]
+"dns-gigahost" = "certbot_dns_gigahost.dns_gigahost:Authenticator"
+
+[tool.setuptools.packages]
+find = {}
+
+[tool.setuptools]
+include-package-data = true
