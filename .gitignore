@@ -4,3 +4,6 @@
 __pycache__
 /dist/
 /env/
+/credentials.ini
+/cli.ini
+/build.bat

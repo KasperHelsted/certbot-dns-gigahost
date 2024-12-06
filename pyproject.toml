@@ -33,6 +33,8 @@ dependencies = [
     "certbot",
     "requests",
     "requests-mock",
+    "bs4",
+    "lxml",
 ]
 
 [project.optional-dependencies]

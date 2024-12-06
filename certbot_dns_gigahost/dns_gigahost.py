@@ -1,11 +1,15 @@
 """DNS Authenticator for gigahost.dk"""
-
 import base64
+import logging
+import re
 from contextlib import AbstractContextManager
 
 import requests
+from bs4 import BeautifulSoup
 from certbot.errors import PluginError
 from certbot.plugins import dns_common
+
+logger = logging.getLogger(__name__)
 
 
 class Authenticator(dns_common.DNSAuthenticator):
@@ -69,6 +73,7 @@ class GigahostClient(AbstractContextManager):
     """Encapsulates all communication with the gigahost.dk API."""
 
     API_URL = "https://controlcenter.gigahost.dk"
+    RECORD_REGEX = re.compile(r'record=(\d+)')
 
     def __init__(self, username, password):
         self.username = username
@@ -100,44 +105,57 @@ class GigahostClient(AbstractContextManager):
             "record_ttl": 3600,
         }
         try:
-            self._request("POST", f"/dns/_add_record", data)
+            self._request("POST", f"/dns/_add_record", data=data)
         except requests.exceptions.RequestException as exp:
             raise PluginError(f"Error adding TXT record: {exp}") from exp
 
     def del_txt_record(self, domain, validation_name, validation):
-        pass
-        # """Delete a TXT record using the supplied information."""
-        # product = self._find_product_id(domain)
-        #
-        # response = self._request("GET", f"/my/products/{product}/dns/records/")
-        #
-        # for record in response["records"]:
-        #     if (
-        #             record["type"] == "TXT"
-        #             and record["name"] == validation_name
-        #             and record["data"] == validation
-        #     ):
-        #         try:
-        #             self._request(
-        #                 "DELETE",
-        #                 f"/my/products/{product}/dns/records/{record['record_id']}/",
-        #             )
-        #         except requests.exceptions.RequestException as exp:
-        #             raise PluginError(f"Error deleting TXT record: {exp}") from exp
+        """Delete a TXT record using the supplied information."""
+        product = self._find_product_id(domain, validation_name)
 
-    # https://controlcenter.gigahost.dk/?module=dns&page=index&domain_name=homehq.dk
-    def _find_product_id(self, domain: str):
+        data = {
+            'domain_name': domain,
+            'record': product
+        }
+
+        self._request('POST', '/dns/_delete_record', data=data)
+
+    def _find_product_id(self, domain: str, validation_name: str) -> str:
+        """
+        Find the product ID for a given domain and validation name.
+
+        Args:
+            domain (str): The domain name to search for.
+            validation_name (str): The validation name to match.
+
+        Returns:
+            str: The product ID if found.
+
+        Raises:
+            PluginError: If no matching product ID is found.
+        """
+        # Generate base domain guesses for error handling
         base_domain_guesses = dns_common.base_domain_name_guesses(domain)
-        response = self._request("GET", "/my/products/")
-        for product in response["products"]:
-            if "domain" in product:
-                if product["domain"]["name"] in base_domain_guesses:
-                    return product["object"]
-                if product["domain"]["name_idn"] in base_domain_guesses:
-                    return product["object"]
 
+        # Fetch DNS page content for the specified domain
+        response = self._request('GET', f'/?module=dns&page=index&domain_name={domain}')
+        soup = BeautifulSoup(response.text, 'lxml')
+
+        # Locate the grandparent element containing the validation name
+        validation_element = soup.find("small", string=validation_name)
+        grandparent = validation_element.parent.parent
+
+        # Find the "Delete" link associated with the validation name
+        delete_link = grandparent.find("a", string='Slet')
+
+        # Extract the product ID from the "href" attribute using regex
+        match = self.RECORD_REGEX.search(delete_link['href'])
+        if match:
+            return match.group(1)
+
+        # Handle cases where expected elements are not found
         raise PluginError(
-            f"No product is matching {base_domain_guesses} for domain {domain}"
+            f"No product matches {base_domain_guesses} for domain {domain}"
         )
 
     @staticmethod
@@ -149,10 +167,10 @@ class GigahostClient(AbstractContextManager):
     def _base64_encode(data):
         return base64.b64encode(data.encode()).decode()
 
-    def _request(self, method, endpoint, data=None):
-        url = f"{self.API_URL}{endpoint}"
-        response = requests.request(
-            method, url, headers=self.headers, files=data, timeout=30, allow_redirects=False
+    def _request(self, method, endpoint, url=None, data=None):
+        url = f"{self.API_URL}{endpoint}" if url is None else url
+        response = self.session.request(
+            method, url, headers=self.headers, data=data, timeout=30
         )
 
         response.raise_for_status()
@@ -167,6 +185,4 @@ class GigahostClient(AbstractContextManager):
             'language': 'da',
             'timezone_offset': '60'
         }
-        response = self._request("POST", '/login/_login', data)
-
-        self.session.cookies = response.cookies
+        response = self._request("POST", '/login/_login', data=data)
