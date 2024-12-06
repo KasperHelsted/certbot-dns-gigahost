@@ -7,3 +7,4 @@ __pycache__
 /credentials.ini
 /cli.ini
 /build.bat
+/build/
