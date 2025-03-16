@@ -1,20 +1,20 @@
-# certbot-dns-gigahost
+# certbot-dns-gigahostdk
 
 gigahost.dk DNS Authenticator plugin for Certbot.
 
 ## Installation
 
 ```sh
-pip install certbot-dns-gigahost
+pip install certbot-dns-gigahostdk
 ```
 
 ## Usage
 
 To start using DNS authentication for the gigahost.dk DNS API, pass the following arguments on certbot's command line:
 
-| Option                       | Description                                         |
-|------------------------------|-----------------------------------------------------|
-| `--authenticator dns-gigahost` | select the authenticator plugin (Required)          |
+| Option                         | Description                                          |
+|--------------------------------|------------------------------------------------------|
+| `--authenticator dns-gigahost` | select the authenticator plugin (Required)           |
 | `--dns-gigahost-credentials`   | gigahost.dk DNS API credentials INI file. (Required) |
 
 ## Credentials
@@ -31,6 +31,7 @@ dns_gigahost_api_key = DSHJdsjh2812872sahj
 ```
 
 ## Examples
+
 To acquire a certificate for `example.com`
 
 ```bash
@@ -41,6 +42,7 @@ certbot certonly \
 ```
 
 To acquire a certificate for ``*.example.com``
+
 ```bash
    certbot certonly \
      --authenticator dns-gigahost \
