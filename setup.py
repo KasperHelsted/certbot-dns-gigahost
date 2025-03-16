@@ -8,7 +8,7 @@ setup(
     install_requires=["certbot", "requests", "requests-mock", "bs4", "lxml", ],
     entry_points={
         "certbot.plugins": [
-            "dns-gigahost = certbot_dns_gigahost.authenticator:Authenticator",
+            "dns-gigahost = certbot_dns_gigahost.dns_gigahost:Authenticator",
         ],
     },
 )

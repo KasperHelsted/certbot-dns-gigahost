@@ -8,11 +8,12 @@ import requests
 from bs4 import BeautifulSoup
 from certbot.errors import PluginError
 from certbot.plugins import dns_common
+from certbot.plugins.dns_common import DNSAuthenticator
 
 logger = logging.getLogger(__name__)
 
 
-class Authenticator(dns_common.DNSAuthenticator):
+class Authenticator(DNSAuthenticator):
     """DNS Authenticator for gigahost.dk
     This Authenticator uses the gigahost.dk API to fulfill a dns-01 challenge.
     """
@@ -143,6 +144,10 @@ class GigahostClient(AbstractContextManager):
 
         # Locate the grandparent element containing the validation name
         validation_element = soup.find("small", string=validation_name)
+        if validation_element is None:
+            raise PluginError(
+                f"No product matches {base_domain_guesses} for domain {domain}"
+            )
         grandparent = validation_element.parent.parent
 
         # Find the "Delete" link associated with the validation name
