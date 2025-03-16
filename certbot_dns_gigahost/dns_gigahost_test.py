@@ -30,9 +30,8 @@ class TestAuthenticator(unittest.TestCase):
         self.authenticator._perform('example.com', '_acme-challenge.example.com', 'test_value')
         mock_add_txt_record.assert_called_once_with('example.com', '_acme-challenge.example.com', 'test_value')
 
-    @patch.object(GigahostClient, '_find_product_id', return_value='12345')
     @patch.object(GigahostClient, 'del_txt_record')
-    def test_cleanup_deletes_txt_record(self, mock_del_txt_record, mock_find_product_id):
+    def test_cleanup_deletes_txt_record(self, mock_del_txt_record):
         self.authenticator._cleanup('example.com', '_acme-challenge.example.com', 'test_value')
         mock_del_txt_record.assert_called_once_with('example.com', '_acme-challenge.example.com', 'test_value')
 
